@@ -1,4 +1,4 @@
-javascript: (function () {
+javascript:(function () {
   /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
@@ -528,27 +528,28 @@ javascript: (function () {
   </ul> \
   </li>';
 
-  const openButtonForm = document.querySelector('.open-button-form');
-
   var descarga_li_mobile = document.createElement("li");
   let classes = "menu-item menu-item-type-custom menu-item-object-custom".split(' ');
+
   descarga_li_mobile.classList.add(...classes);
-  descarga_li_mobile.innerHTML = `
-  <div class="btn dropdown-toggle" data-toggle="dropdown" id="dropdownBtnMobile">
-      <a>Descargar CSV<i class="fa fa-download" aria-hidden="true"></i></a>
-  </div>
-  <ul class="dropdown-menu pull-right descargar hidden" style="background: #010101;">
-      <li><a class="csv-link" data-action="series">Series</a></li>
-      <li><a class="csv-link" data-action="animes">Animes</a></li>
-      <li><a class="csv-link" data-action="pelis">Películas</a></li>
-      <li><a class="csv-link" data-action="capitulos">Capítulos (PENDIENTE)</a></li>
-  </ul>`;
-
-
-  if (openButtonForm && openButtonForm.parentNode) {
-    openButtonForm.parentNode.insertBefore(descarga_li_mobile, openButtonForm.nextSibling);
-  }
-
+  descarga_li_mobile.innerHTML =
+    '<div class="btn dropdown-toggle" data-toggle="dropdown" id="dropdownBtn"> \
+    <a>Descargar CSV<i class="fa fa-download" aria-hidden="true"></i></a> \
+  </div>\
+<ul class="dropdown-menu pull-right descargar hidden" style="background: #010101;"> \
+    <li> \
+        <a class="csv-link" data-action="series">Series</a> \
+    </li> \
+    <li> \
+        <a class="csv-link" data-action="animes">Animes</a> \
+    </li> \
+    <li> \
+        <a class="csv-link" data-action="pelis">Películas</a> \
+    </li> \
+    <li> \
+        <a class="csv-link" data-action="capitulos">Capítulos (PENDIENTE)</a> \
+    </li> \
+  </ul>';
 
   const style = document.createElement('style');
   style.textContent = `
