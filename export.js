@@ -1,4 +1,4 @@
-(function () {
+javascript:(function () {
   /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
