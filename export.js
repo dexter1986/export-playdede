@@ -1,6 +1,6 @@
 javascript: (function () {
   /*********************************************************************************************
-  
+    V1
     Abrir la web de Playdede
     
     Introducir como url -> javascript:import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
