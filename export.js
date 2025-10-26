@@ -1,4 +1,3 @@
-javascript: (function () {
   /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
@@ -680,4 +679,3 @@ javascript: (function () {
 
   console.log('✅ Script de exportación listo');
   alert('✅ Script de exportación cargado');
-})();
