@@ -1,4 +1,4 @@
-(function () {
+javascript: (function () {
   /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
@@ -389,12 +389,7 @@
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
-    // Verificar datos problemáticos
-    data.forEach((element, index) => {
-      if (element.name && element.name.includes(';')) {
-        console.log(`⚠️  Título con ";" encontrado [${index}]:`, element.name);
-      }
-
+    data.forEach(element => {
       let csv_temp = {
         "name": element.name,
         "genres": element.genres,
@@ -405,9 +400,10 @@
       csv2.push(csv_temp);
     });
 
-    console.log(`CSV ${fileName}: ${csv2.length} elementos, ${csv2.filter(x => x.name && x.name.includes(';')).length} con ";"`);
+    console.log(`CSV ${fileName}: ${csv2.length} elementos procesados\n`);
     export_csv(csvHeader, csv2, delimiter_csv, fileName);
   }
+
 
   function escapeCsvField(field, delimiter) {
     if (field === null || field === undefined) return '';
@@ -429,7 +425,12 @@
     let csv = header;
 
     arrayData.forEach(obj => {
-      let row = Object.keys(obj).map(key => escapeCsvField(obj[key], delimiter));
+      let row = [];
+      for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          row.push(escapeCsvField(obj[key], delimiter));
+        }
+      }
       csv += row.join(delimiter) + "\n";
     });
 
