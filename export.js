@@ -738,7 +738,7 @@ javascript: (function () {
         <a class="csv-link" data-action="pelis">Películas</a> \
     </li> \
     <li> \
-        <a class="csv-link" data-action="capitulos">Capítulos (PENDIENTE)</a> \
+        <a class="csv-link" data-action="capitulos">Capítulos</a> \
     </li> \
   </ul> \
   </li>';
@@ -762,7 +762,7 @@ javascript: (function () {
         <a class="csv-link" data-action="pelis">Películas</a> \
     </li> \
     <li> \
-        <a class="csv-link" data-action="capitulos">Capítulos (PENDIENTE)</a> \
+        <a class="csv-link" data-action="capitulos">Capítulos</a> \
     </li> \
   </ul>';
 
