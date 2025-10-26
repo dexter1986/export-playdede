@@ -389,6 +389,7 @@ javascript: (function () {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
+    // Verificar datos problemáticos
     data.forEach((element, index) => {
       if (element.name && element.name.includes(';')) {
         console.log(`⚠️  Título con ";" encontrado [${index}]:`, element.name);
@@ -428,12 +429,7 @@ javascript: (function () {
     let csv = header;
 
     arrayData.forEach(obj => {
-      let row = [];
-      for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          row.push(escapeCsvField(obj[key], delimiter));
-        }
-      }
+      let row = Object.keys(obj).map(key => escapeCsvField(obj[key], delimiter));
       csv += row.join(delimiter) + "\n";
     });
 
