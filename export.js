@@ -386,44 +386,55 @@ javascript: (function () {
 
 
   function createCsv(data, fileName) {
-
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
     data.forEach(element => {
-      let csv_temp =
-      {
+      let csv_temp = {
         "name": element.name,
         "genres": element.genres,
         "id_thetvbb": element.id_thetvbb,
-        "type": element.type,
+        "type": element.type
       };
 
       csv2.push(csv_temp);
-
     });
-    console.log("CSV Series " + fileName + "\n");
-    export_csv(csvHeader, csv2, delimiter_csv, fileName)
 
+    console.log(`CSV ${fileName}: ${csv2.length} elementos procesados\n`);
+    export_csv(csvHeader, csv2, delimiter_csv, fileName);
   }
 
 
-  function export_csv(arrayHeader, arrayData, delimiter, fileName) {
+  function escapeCsvField(field, delimiter) {
+    if (field === null || field === undefined) return '';
 
-    let header = arrayHeader.join(delimiter) + '\n';
+    const stringField = String(field);
+
+    if (stringField.includes(delimiter) ||
+      stringField.includes('"') ||
+      stringField.includes('\n') ||
+      stringField.includes('\r')) {
+      return '"' + stringField.replace(/"/g, '""') + '"';
+    }
+
+    return stringField;
+  }
+
+  function export_csv(arrayHeader, arrayData, delimiter, fileName) {
+    let header = arrayHeader.map(field => escapeCsvField(field, delimiter)).join(delimiter) + '\n';
     let csv = header;
 
     arrayData.forEach(obj => {
       let row = [];
       for (key in obj) {
         if (obj.hasOwnProperty(key)) {
-          row.push(obj[key]);
+          row.push(escapeCsvField(obj[key], delimiter));
         }
       }
       csv += row.join(delimiter) + "\n";
     });
 
-    let csvData = new Blob([csv], { type2: 'text/csv' });
+    let csvData = new Blob([csv], { type: 'text/csv; charset=utf-8' });
     let csvUrl = URL.createObjectURL(csvData);
 
     let hiddenElement = document.createElement('a');
