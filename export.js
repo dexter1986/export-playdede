@@ -1,5 +1,4 @@
-javascript: (function () {
-  /*********************************************************************************************
+ /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
   
@@ -389,7 +388,12 @@ javascript: (function () {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
-    data.forEach(element => {
+    // Verificar datos problemáticos
+    data.forEach((element, index) => {
+      if (element.name && element.name.includes(';')) {
+        console.log(`⚠️  Título con ";" encontrado [${index}]:`, element.name);
+      }
+
       let csv_temp = {
         "name": element.name,
         "genres": element.genres,
@@ -400,10 +404,9 @@ javascript: (function () {
       csv2.push(csv_temp);
     });
 
-    console.log(`CSV ${fileName}: ${csv2.length} elementos procesados\n`);
+    console.log(`CSV ${fileName}: ${csv2.length} elementos, ${csv2.filter(x => x.name && x.name.includes(';')).length} con ";"`);
     export_csv(csvHeader, csv2, delimiter_csv, fileName);
   }
-
 
   function escapeCsvField(field, delimiter) {
     if (field === null || field === undefined) return '';
@@ -425,12 +428,7 @@ javascript: (function () {
     let csv = header;
 
     arrayData.forEach(obj => {
-      let row = [];
-      for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          row.push(escapeCsvField(obj[key], delimiter));
-        }
-      }
+      let row = Object.keys(obj).map(key => escapeCsvField(obj[key], delimiter));
       csv += row.join(delimiter) + "\n";
     });
 
@@ -681,4 +679,3 @@ javascript: (function () {
 
   console.log('✅ Script de exportación listo');
   alert('✅ Script de exportación cargado');
-})();
