@@ -388,7 +388,6 @@ javascript: (function () {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
-    // Verificar datos problemáticos
     data.forEach((element, index) => {
       let csv_temp = {
         "name": element.name,
