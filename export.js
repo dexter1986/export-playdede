@@ -669,5 +669,5 @@ javascript: (function () {
   document.getElementsByClassName('main-header')[1].appendChild(descarga_li_mobile);
 
   console.log('✅ Script de exportación listo');
-
+  alert('✅ Script de exportación cargado');
 })();
