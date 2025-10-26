@@ -1,13 +1,13 @@
-javascript:(function () {
+javascript: (function () {
   /*********************************************************************************************
   
     Abrir la web de Playdede
     
-	  Introducir como url -> javascript:import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
+    Introducir como url -> javascript:import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
 
-	  Cuidado por que es posible que se borre el principio javascript: debes introducirlo a mano javascript: y luego pegar
+    Cuidado por que es posible que se borre el principio javascript: debes introducirlo a mano javascript: y luego pegar
 
-  	import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
+    import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
 
     Aparecerá un nuevo punto de menú llamado "Descargar CSV" pulsa en él para ver el menú de descargas
 
@@ -16,43 +16,95 @@ javascript:(function () {
 
   var delimiter_csv = ';'; /* delimitador para el csv: '\t' => tabulacion, ',' => comilla, ';' => punto y coma.*/
 
-  var series = [], pelis = [], capitulos = [], temporadas = [], listas_creadas = [], listas_siguiendo = [];
+  async function getCapitulos() {
+    console.log("Iniciando exportación de capítulos...");
+    showLoading("Exportando capítulos... Esto puede tomar varios minutos");
 
+    try {
+      const allSeries = [];
+      const seriesResults = await Promise.allSettled([
+        fetchUserData('serie', 'sig'),
+        fetchUserData('serie', 'pend'),
+        // fetchUserData('serie', 'fav'),
+        // fetchUserData('serie', 'vis'),
 
-  function getCapitulos() {
-    return console.log("Capitulos, Nada que exportar: Pendiente de realizar la programación para exportar capitulos.\n");
+        fetchUserData('anime', 'sig'),
+        fetchUserData('anime', 'pend'),
+        // fetchUserData('anime', 'fav'),
+        // fetchUserData('anime', 'vis')
+      ]);
 
-    var r = confirm("Exportar el CSV de Capítulos.\nLa página se quedará congelada mientras se procesa.\nPulsa aceptar para proceder");
-    if (r == true) {
-      let capitulos_series_favorites;
-      let capitulos_series_following;
-      let capitulos_series_pending;
-      let capitulos_series_seen;
+      seriesResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          allSeries.push(...result.value);
+        }
+      });
 
+      const uniqueSeries = allSeries.filter((serie, index, self) =>
+        index === self.findIndex(s => s.serie_url === serie.serie_url)
+      );
 
+      console.log(`📺 Encontradas ${uniqueSeries.length} series únicas, buscando capítulos...`);
 
-      console.log("Capítulos");
+      const allCapitulos = [];
 
-      capitulos_series_favorites = parser.parseFromString(getContenido(url_series_favorites), "text/html").querySelectorAll('.media-container');
-      createData(capitulos_series_favorites, "favorita", "capitulos");
+      const batchSize = 3;
+      for (let i = 0; i < uniqueSeries.length; i += batchSize) {
+        const batch = uniqueSeries.slice(i, i + batchSize);
+        const batchNumber = Math.floor(i / batchSize) + 1;
+        const totalBatches = Math.ceil(uniqueSeries.length / batchSize);
 
+        console.log(`📋 Procesando lote ${batchNumber} de ${totalBatches} (series ${i + 1} a ${Math.min(i + batchSize, uniqueSeries.length)})`);
 
-      capitulos_series_following = parser.parseFromString(getContenido(url_series_following), "text/html").querySelectorAll('.media-container');
-      createData(capitulos_series_following, "siguiendo", "capitulos");
+        const batchPromises = batch.map(async (serie, index) => {
+          console.log(`🔍 Buscando capítulos en: ${serie.name}`);
+          const capitulos = await fetchCapitulosFromSerie(serie.serie_url);
 
+          // Agregar información adicional de la serie
+          const capitulosConInfo = capitulos.map(cap => ({
+            ...cap,
+            serie_genres: serie.genres,
+            serie_rating: serie.rating,
+            serie_release_date: serie.release_date
+          }));
 
-      capitulos_series_pending = parser.parseFromString(getContenido(url_series_pending), "text/html").querySelectorAll('.media-container');
-      createData(capitulos_series_pending, "pendiente", "capitulos");
+          const capitulosVistos = capitulos.filter(cap => cap.visto);
 
+          console.log(`✅ ${serie.name}: ${capitulos.length} capítulos (${capitulosVistos.length} vistos)`);
 
-      capitulos_series_seen = parser.parseFromString(getContenido(url_series_seen), "text/html").querySelectorAll('.media-container');
-      createData(capitulos_series_seen, "vista", "capitulos");
+          return capitulosConInfo;
+        });
 
+        const batchResults = await Promise.allSettled(batchPromises);
 
-      createCsvCapitulos(capitulos, name = 'capitulos');
+        batchResults.forEach(result => {
+          if (result.status === 'fulfilled') {
+            allCapitulos.push(...result.value);
+          } else {
+            console.error('❌ Error en lote:', result.reason);
+          }
+        });
+
+        if (i + batchSize < uniqueSeries.length) {
+          console.log('⏳ Esperando 3 segundos antes del siguiente lote...');
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+      }
+
+      createCsvCapitulos(allCapitulos, 'capitulos');
+      hideLoading();
+
+      const totalVistos = allCapitulos.filter(cap => cap.visto).length;
+      const totalTemporadas = [...new Set(allCapitulos.map(cap => cap.temporada_completa))].length;
+
+      alert(`✅ CSV de capítulos exportado correctamente!\n\n📊 Estadísticas:\n• ${allCapitulos.length} capítulos totales\n• ${totalVistos} capítulos vistos\n• ${totalTemporadas} temporadas\n• ${uniqueSeries.length} series procesadas`);
+
+    } catch (error) {
+      console.error('Error general:', error);
+      hideLoading();
+      alert("❌ Error al exportar capítulos: " + error.message);
     }
   }
-
 
   async function getPelis() {
     console.log("Películas\n");
@@ -233,9 +285,12 @@ javascript:(function () {
 
       const linkElement = article.querySelector('a[href]');
       let id_thetvbb = '';
+      let serieUrl = '';
 
       if (linkElement) {
         const href = linkElement.getAttribute('href');
+        serieUrl = href;
+
         const lastUnderscoreIndex = href.lastIndexOf('_');
         if (lastUnderscoreIndex !== -1) {
           let extractedId = href.substring(lastUnderscoreIndex + 1);
@@ -273,7 +328,8 @@ javascript:(function () {
           id_thetvbb: id_thetvbb,
           poster_url: posterUrl,
           release_date: date,
-          rating: rating
+          rating: rating,
+          serie_url: serieUrl
         });
       }
     });
@@ -365,6 +421,143 @@ javascript:(function () {
     }
   }
 
+  async function fetchCapitulosFromSerie(serieUrl) {
+    try {
+      // Construir la URL completa
+      const fullUrl = serieUrl.startsWith('http') ? serieUrl : `https://playdede.club/${serieUrl}`;
+
+      console.log(`🔍 Obteniendo capítulos de: ${fullUrl}`);
+
+      const response = await fetch(fullUrl, {
+        method: "GET",
+        mode: "cors",
+        credentials: "include",
+        headers: {
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "es-ES,es;q=0.9",
+          "Cache-Control": "no-cache",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const htmlContent = await response.text();
+      const capitulos = parseCapitulosFromHTML(htmlContent, serieUrl);
+
+      console.log(`✅ Encontrados ${capitulos.length} capítulos`);
+      return capitulos;
+
+    } catch (error) {
+      console.error('❌ Error fetching capitulos:', error);
+      return [];
+    }
+  }
+
+  function parseCapitulosFromHTML(htmlString, serieUrl) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+
+    const capitulos = [];
+
+    // Extraer el nombre de la serie del título de la página
+    const serieName = doc.querySelector('h1') ? doc.querySelector('h1').textContent.trim() : extractSerieNameFromUrl(serieUrl);
+
+    // Buscar todas las temporadas
+    const seasonElements = doc.querySelectorAll('#seasons .clickSeason');
+
+    // Si no hay temporadas visibles, buscar en la primera temporada (que está activa)
+    if (seasonElements.length === 0) {
+      // Procesar la temporada activa
+      processTemporada(doc, '1', serieName, serieUrl, capitulos);
+    } else {
+      // Procesar cada temporada
+      seasonElements.forEach(seasonElement => {
+        const seasonNumber = seasonElement.getAttribute('data-season');
+        processTemporada(doc, seasonNumber, serieName, serieUrl, capitulos);
+      });
+    }
+
+    return capitulos;
+  }
+
+  function processTemporada(doc, seasonNumber, serieName, serieUrl, capitulos) {
+
+    const seasonContainer = doc.querySelector(`.se-c[data-season="${seasonNumber}"]`);
+
+    if (!seasonContainer) return;
+
+    const episodioElements = seasonContainer.querySelectorAll('li[class*="mark-"]');
+
+    episodioElements.forEach(episodio => {
+
+      const linkElement = episodio.querySelector('a[href]');
+      const capituloUrl = linkElement ? linkElement.getAttribute('href') : '';
+
+      const titleElement = episodio.querySelector('.epst');
+      const title = titleElement ? titleElement.textContent.trim() : '';
+
+      const numberElement = episodio.querySelector('.numerando');
+      const numberText = numberElement ? numberElement.textContent.trim() : '';
+
+      const dateElement = episodio.querySelector('.date');
+      const date = dateElement ? dateElement.textContent.trim() : '';
+
+      const imageElement = episodio.querySelector('.imagen img');
+      const imageUrl = imageElement ? imageElement.getAttribute('src') : '';
+
+      const vistoElement = episodio.querySelector('.markEpisode');
+      let visto = false;
+      if (vistoElement) {
+        const vistoText = vistoElement.textContent.trim();
+        visto = vistoText.includes('Visto');
+      }
+
+      let temporadaNum = seasonNumber;
+      let episodioNum = '';
+      let numeroCompleto = '';
+
+      if (numberText) {
+        const match = numberText.match(/(\d+)\s*-\s*(\d+)/);
+        if (match) {
+          temporadaNum = match[1];
+          episodioNum = match[2];
+          numeroCompleto = `${temporadaNum}x${episodioNum.padStart(2, '0')}`;
+        } else {
+          numeroCompleto = numberText;
+        }
+      } else {
+        numeroCompleto = `${temporadaNum}x${episodioNum.padStart(2, '0')}`;
+      }
+
+      const episodioId = episodio.getAttribute('class') ?
+        episodio.getAttribute('class').match(/mark-(\d+)/) : null;
+
+      capitulos.push({
+        serie_name: serieName,
+        serie_url: serieUrl,
+        temporada: temporadaNum,
+        episodio: episodioNum,
+        capitulo_title: title,
+        capitulo_number: numeroCompleto,
+        capitulo_url: capituloUrl,
+        fecha_emision: date,
+        imagen_url: imageUrl,
+        visto: visto,
+        episodio_id: episodioId ? episodioId[1] : '',
+        temporada_completa: `${serieName} - T${temporadaNum}`,
+        numero_original: numberText
+      });
+    });
+  }
+
+  function extractSerieNameFromUrl(url) {
+    const match = url.match(/\/([^\/]+)\/?$/);
+    return match ? match[1].replace(/-/g, ' ').replace(/_/g, ' ') : 'Serie Desconocida';
+  }
+
   function getNextPageNumber(htmlString) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlString, 'text/html');
@@ -393,7 +586,6 @@ javascript:(function () {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
-    // Verificar datos problemáticos
     data.forEach((element, index) => {
       if (element.name && element.name.includes(';')) {
         console.log(`⚠️  Título con ";" encontrado [${index}]:`, element.name);
@@ -410,6 +602,25 @@ javascript:(function () {
     });
 
     console.log(`CSV ${fileName}: ${csv2.length} elementos, ${csv2.filter(x => x.name && x.name.includes(';')).length} con ";"`);
+    export_csv(csvHeader, csv2, delimiter_csv, fileName);
+  }
+
+  function createCsvCapitulos(data, fileName) {
+    let csvHeader = ["Serie", "Capítulo", "Número", "Visto",];
+    let csv2 = [];
+
+    data.forEach((element, index) => {
+      let csv_temp = {
+        "serie": element.serie_name || element.serie,
+        "capitulo": element.capitulo_title,
+        "numero": element.capitulo_number,
+        "visto": element.visto ? "Sí" : "No"
+      };
+
+      csv2.push(csv_temp);
+    });
+
+    console.log(`CSV ${fileName}: ${csv2.length} capítulos procesados`);
     export_csv(csvHeader, csv2, delimiter_csv, fileName);
   }
 
