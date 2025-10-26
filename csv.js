@@ -1,4 +1,5 @@
- /*********************************************************************************************
+javascript:(function () {
+  /*********************************************************************************************
   
     Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
   
@@ -432,7 +433,12 @@
       csv += row.join(delimiter) + "\n";
     });
 
-    let csvData = new Blob([csv], { type: 'text/csv; charset=utf-8' });
+    // AGREGAR BOM UTF-8 para Excel
+    const BOM = '\uFEFF';
+    let csvData = new Blob([BOM + csv], {
+      type: 'text/csv; charset=utf-8'
+    });
+
     let csvUrl = URL.createObjectURL(csvData);
 
     let hiddenElement = document.createElement('a');
@@ -679,3 +685,4 @@
 
   console.log('✅ Script de exportación listo');
   alert('✅ Script de exportación cargado');
+})();
