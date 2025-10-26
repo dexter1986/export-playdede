@@ -384,11 +384,16 @@ javascript: (function () {
     return null;
   }
 
+
   function createCsv(data, fileName) {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
     data.forEach((element, index) => {
+      if (element.name && element.name.includes(';')) {
+        console.log(`⚠️  Título con ";" encontrado [${index}]:`, element.name);
+      }
+
       let csv_temp = {
         "name": element.name,
         "genres": element.genres,
