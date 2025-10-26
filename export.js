@@ -16,56 +16,232 @@ javascript: (function () {
 
   var delimiter_csv = ';'; /* delimitador para el csv: '\t' => tabulacion, ',' => comilla, ';' => punto y coma.*/
 
-  async function getCapitulos() {
-    console.log("Iniciando exportación de capítulos...");
+  function getCapitulos() {
+    // Mostrar diálogo de selección
+    const selectionDialog = `
+        <div id="capitulosSelection" style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: Arial, sans-serif;
+        ">
+            <div style="
+                background: white;
+                padding: 30px;
+                border-radius: 15px;
+                box-shadow: 0 0 30px rgba(0,0,0,0.4);
+                min-width: 400px;
+                max-width: 90%;
+                max-height: 90%;
+                overflow-y: auto;
+            ">
+                <h3 style="margin-top: 0; color: #333;">📺 Seleccionar series/animes para exportar capítulos</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #555; margin-bottom: 10px;">🎬 Series</h4>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="serie_sig" checked> Series que sigo
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="serie_pend"> Series pendientes
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="serie_fav"> Series favoritas
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="serie_vis"> Series vistas
+                    </label>
+                </div>
+                
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #555; margin-bottom: 10px;">🎌 Animes</h4>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="anime_sig" checked> Animes que sigo
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="anime_pend"> Animes pendientes
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="anime_fav"> Animes favoritos
+                    </label>
+                    <label style="display: block; margin: 8px 0;">
+                        <input type="checkbox" id="anime_vis"> Animes vistos
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button id="cancelCapitulos" style="
+                        padding: 10px 20px;
+                        background: #6c757d;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">Cancelar</button>
+                    <button id="confirmCapitulos" style="
+                        padding: 10px 20px;
+                        background: #28a745;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    ">Exportar Capítulos</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Insertar el diálogo en el DOM
+    const dialogContainer = document.createElement('div');
+    dialogContainer.innerHTML = selectionDialog;
+    document.body.appendChild(dialogContainer);
+
+    // Event listeners para los botones
+    document.getElementById('cancelCapitulos').addEventListener('click', function () {
+      document.body.removeChild(dialogContainer);
+    });
+
+    document.getElementById('confirmCapitulos').addEventListener('click', function () {
+      // Obtener selecciones
+      const selections = {
+        serie_sig: document.getElementById('serie_sig').checked,
+        serie_pend: document.getElementById('serie_pend').checked,
+        serie_fav: document.getElementById('serie_fav').checked,
+        serie_vis: document.getElementById('serie_vis').checked,
+        anime_sig: document.getElementById('anime_sig').checked,
+        anime_pend: document.getElementById('anime_pend').checked,
+        anime_fav: document.getElementById('anime_fav').checked,
+        anime_vis: document.getElementById('anime_vis').checked
+      };
+
+      // Verificar que al menos una opción esté seleccionada
+      const hasSelection = Object.values(selections).some(selected => selected);
+
+      if (!hasSelection) {
+        alert('❌ Por favor selecciona al menos una opción');
+        return;
+      }
+
+      // Remover el diálogo
+      document.body.removeChild(dialogContainer);
+
+      // Iniciar la exportación con las selecciones
+      getCapitulosDetailed(selections);
+    });
+  }
+
+  async function getCapitulosDetailed(selections) {
+    console.log("Iniciando exportación de capítulos...", selections);
     showLoading("Exportando capítulos... Esto puede tomar varios minutos");
 
     try {
       const allSeries = [];
-      const seriesResults = await Promise.allSettled([
-        fetchUserData('serie', 'sig'),
-        fetchUserData('serie', 'pend'),
-        // fetchUserData('serie', 'fav'),
-        // fetchUserData('serie', 'vis'),
+      const promises = [];
 
-        fetchUserData('anime', 'sig'),
-        fetchUserData('anime', 'pend'),
-        // fetchUserData('anime', 'fav'),
-        // fetchUserData('anime', 'vis')
-      ]);
+      // Agregar promesas según las selecciones
+      if (selections.serie_sig) {
+        promises.push(fetchUserData('serie', 'sig'));
+      }
+      if (selections.serie_pend) {
+        promises.push(fetchUserData('serie', 'pend'));
+      }
+      if (selections.serie_fav) {
+        promises.push(fetchUserData('serie', 'fav'));
+      }
+      if (selections.serie_vis) {
+        promises.push(fetchUserData('serie', 'vis'));
+      }
+      if (selections.anime_sig) {
+        promises.push(fetchUserData('anime', 'sig'));
+      }
+      if (selections.anime_pend) {
+        promises.push(fetchUserData('anime', 'pend'));
+      }
+      if (selections.anime_fav) {
+        promises.push(fetchUserData('anime', 'fav'));
+      }
+      if (selections.anime_vis) {
+        promises.push(fetchUserData('anime', 'vis'));
+      }
 
-      seriesResults.forEach((result, index) => {
+      // Ejecutar todas las promesas seleccionadas
+      const results = await Promise.allSettled(promises);
+
+      // Procesar resultados
+      results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           allSeries.push(...result.value);
+        } else {
+          console.error(`❌ Error en una de las peticiones:`, result.reason);
         }
       });
 
+      // Eliminar duplicados por URL
       const uniqueSeries = allSeries.filter((serie, index, self) =>
         index === self.findIndex(s => s.serie_url === serie.serie_url)
       );
 
-      console.log(`📺 Encontradas ${uniqueSeries.length} series únicas, buscando capítulos...`);
+      console.log(`📺 Encontradas ${uniqueSeries.length} series/animes únicos, buscando capítulos...`);
 
+      // Mostrar resumen de lo que se va a procesar
+      const selectedTypes = [];
+      if (selections.serie_sig) selectedTypes.push("Series que sigo");
+      if (selections.serie_pend) selectedTypes.push("Series pendientes");
+      if (selections.serie_fav) selectedTypes.push("Series favoritas");
+      if (selections.serie_vis) selectedTypes.push("Series vistas");
+      if (selections.anime_sig) selectedTypes.push("Animes que sigo");
+      if (selections.anime_pend) selectedTypes.push("Animes pendientes");
+      if (selections.anime_fav) selectedTypes.push("Animes favoritos");
+      if (selections.anime_vis) selectedTypes.push("Animes vistos");
+
+      console.log(`📋 Procesando: ${selectedTypes.join(', ')}`);
+
+      // Si no hay series, mostrar mensaje y terminar
+      if (uniqueSeries.length === 0) {
+        hideLoading();
+        alert("ℹ️ No se encontraron series/animes con los criterios seleccionados");
+        return;
+      }
+
+      // Ahora obtener capítulos de cada serie/anime
       const allCapitulos = [];
 
+      // Procesar en lotes
       const batchSize = 3;
       for (let i = 0; i < uniqueSeries.length; i += batchSize) {
         const batch = uniqueSeries.slice(i, i + batchSize);
         const batchNumber = Math.floor(i / batchSize) + 1;
         const totalBatches = Math.ceil(uniqueSeries.length / batchSize);
 
-        console.log(`📋 Procesando lote ${batchNumber} de ${totalBatches} (series ${i + 1} a ${Math.min(i + batchSize, uniqueSeries.length)})`);
+        // Actualizar mensaje de loading
+        const loadingElement = document.getElementById('loadingOverlay');
+        if (loadingElement) {
+          const messageElement = loadingElement.querySelector('div > div:nth-child(2)');
+          if (messageElement) {
+            messageElement.textContent = `Exportando capítulos... Lote ${batchNumber} de ${totalBatches} (${i + 1}-${Math.min(i + batchSize, uniqueSeries.length)} de ${uniqueSeries.length})`;
+          }
+        }
+
+        console.log(`📋 Procesando lote ${batchNumber} de ${totalBatches} (${i + 1} a ${Math.min(i + batchSize, uniqueSeries.length)})`);
 
         const batchPromises = batch.map(async (serie, index) => {
           console.log(`🔍 Buscando capítulos en: ${serie.name}`);
           const capitulos = await fetchCapitulosFromSerie(serie.serie_url);
 
-          // Agregar información adicional de la serie
+          // Agregar información adicional
           const capitulosConInfo = capitulos.map(cap => ({
             ...cap,
             serie_genres: serie.genres,
             serie_rating: serie.rating,
-            serie_release_date: serie.release_date
+            serie_release_date: serie.release_date,
+            tipo: serie.type || 'serie' // Agregar tipo (serie/anime)
           }));
 
           const capitulosVistos = capitulos.filter(cap => cap.visto);
@@ -85,19 +261,23 @@ javascript: (function () {
           }
         });
 
+        // Pausa entre lotes
         if (i + batchSize < uniqueSeries.length) {
-          console.log('⏳ Esperando 3 segundos antes del siguiente lote...');
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          console.log('⏳ Esperando 2 segundos antes del siguiente lote...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
       }
 
+      // Crear CSV con los capítulos
       createCsvCapitulos(allCapitulos, 'capitulos');
       hideLoading();
 
+      // Mostrar estadísticas finales
       const totalVistos = allCapitulos.filter(cap => cap.visto).length;
       const totalTemporadas = [...new Set(allCapitulos.map(cap => cap.temporada_completa))].length;
+      const seriesConCapitulos = [...new Set(allCapitulos.map(cap => cap.serie_name))].length;
 
-      alert(`✅ CSV de capítulos exportado correctamente!\n\n📊 Estadísticas:\n• ${allCapitulos.length} capítulos totales\n• ${totalVistos} capítulos vistos\n• ${totalTemporadas} temporadas\n• ${uniqueSeries.length} series procesadas`);
+      alert(`✅ CSV de capítulos exportado correctamente!\n\n📊 Estadísticas:\n• ${allCapitulos.length} capítulos totales\n• ${totalVistos} capítulos vistos\n• ${totalTemporadas} temporadas\n• ${seriesConCapitulos} series/animes con capítulos\n• ${uniqueSeries.length} series/animes procesados`);
 
     } catch (error) {
       console.error('Error general:', error);
