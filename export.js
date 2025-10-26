@@ -1,12 +1,16 @@
 javascript:(function () {
   /*********************************************************************************************
   
-    Abrir la web de Playdede y pulsa f12 y "consola" pegáis todo este código y le dais a enter
-  
-    Aparecerá un nuevo menú a la derecha de tu usuario llamado "Descargar CSV" pulsa en él para ver el menú de descargas
-  
-    Hasta que no termine un comando no ejecutar el siguiente, cada uno genera un csv diferente.
-  
+    Abrir la web de Playdede
+    
+	  Introducir como url -> javascript:import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
+
+	  Cuidado por que es posible que se borre el principio javascript: debes introducirlo a mano javascript: y luego pegar
+
+  	import('https://cdn.jsdelivr.net/gh/dexter1986/export-playdede@latest/export.js');
+
+    Aparecerá un nuevo punto de menú llamado "Descargar CSV" pulsa en él para ver el menú de descargas
+
   ***********************************************************************************************/
 
 
