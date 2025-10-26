@@ -384,12 +384,12 @@ javascript: (function () {
     return null;
   }
 
-
   function createCsv(data, fileName) {
     let csvHeader = ["Title", "Genres", "IdThetvbb", "Type"];
     let csv2 = [];
 
-    data.forEach(element => {
+    // Verificar datos problemáticos
+    data.forEach((element, index) => {
       let csv_temp = {
         "name": element.name,
         "genres": element.genres,
@@ -400,10 +400,9 @@ javascript: (function () {
       csv2.push(csv_temp);
     });
 
-    console.log(`CSV ${fileName}: ${csv2.length} elementos procesados\n`);
+    console.log(`CSV ${fileName}: ${csv2.length} elementos, ${csv2.filter(x => x.name && x.name.includes(';')).length} con ";"`);
     export_csv(csvHeader, csv2, delimiter_csv, fileName);
   }
-
 
   function escapeCsvField(field, delimiter) {
     if (field === null || field === undefined) return '';
